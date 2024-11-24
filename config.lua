@@ -27,7 +27,7 @@ Config.TruckToSpawn = "packer" -- Vehicle MUST be able to pull a large trailer.
 
 Config.TrailerToSpawn = "tanker2" -- Must be a tanker variant, or else the rope will not place in the right position. If this does not bother you, then change to your liking.
 
-Config.PayPerFueling = math.random(1200, 2500) -- This is multiplied by the amount of refuels the player does. So if they refuel 5 stations, they will get 5*math.random
+Config.PayPerFueling = math.random(250, 500) -- This is multiplied by the amount of refuels the player does. So if they refuel 5 stations, they will get 5*math.random
 
 Config.FuelScript = 'LegacyFuel' -- cdn-fuel or ps-fuel or LegacyFuel
 
