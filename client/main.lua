@@ -396,26 +396,21 @@ end)
 --/////////////////////////////////////////////////////////////////////////////////////////////////--
 
 RegisterNetEvent('ReturnNozzle', function()
-    nozzleInHand = false
-    TriggerServerEvent("InteractSound_SV:PlayOnSource", "putbacknozzle", 0.4)
-    Wait(250)
-    DeleteObject(fuelnozzle1)
+	nozzleInHand = false
+	TriggerServerEvent("InteractSound_SV:PlayOnSource", "putbacknozzle", 0.4)
+	Wait(250)
+	DeleteObject(fuelnozzle1)
     DeleteObject(fuelnozzle2)
-    RopeUnloadTextures()
-    DeleteRope(Rope1)
+	RopeUnloadTextures()
+	DeleteRope(Rope1)
     DeleteRope(Rope2)
-    ResetNozzleInHand()
 end)
 
 --/////////////////////////////////////////////////////////////////////////////////////////////////--
 
-function ResetNozzleInHand()
-    nozzleInHand = false
-end
-
 function BringToTruck()
     if Config.Debug == true then
-        print("cooldown: " .. cooldown)
+        print("cooldown: "..cooldown)
     end
     CreateThread(function()
         local insideZone = false
@@ -433,25 +428,25 @@ function BringToTruck()
                             for _, model in ipairs(trailerModels) do
                                 local modelHash = tonumber(model)
                                 exports['qb-target']:AddTargetModel({modelHash}, {
-                                    options = {
-                                        {
-                                            type = "client",
-                                            event = "FuelTruck",
-                                            icon = "fas fa-gas-pump",
-                                            label = "Fuel Truck",
-                                            canInteract = function()
-                                                if cooldown == 0 then
-                                                    return true
-                                                else
-                                                    return false
-                                                end
-                                            end
-                                        },
-                                    },
-                                    distance = 5.0,
-                                })
+                                options = {
+                                {
+                                    type = "client",
+                                    event = "FuelTruck",
+                                    icon = "fas fa-gas-pump",
+                                    label = "Fuel Truck",
+                                    canInteract = function()
+                                        if nozzleInHand and cooldown == 0 then
+                                            return true
+                                        else
+                                            return false
+                                        end
+                                    end
+                                },
+                            },
+                            distance = 5.0,
+                            })
                             end
-                        end
+			            end
                     end
                     if Config.Debug == true then
                         print("Player has entered the box zone")
@@ -604,80 +599,85 @@ end
 
 RegisterNetEvent('pumpRefuel', function()
     local vehicle = GetLastDrivenVehicle()
-    local trailer = GetVehicleTrailerVehicle(vehicle, 0)
+    local trailer = 0
+    local hasTrailer, trailerHandle = GetVehicleTrailerVehicle(vehicle, trailer)
+    local lastVehicle = GetPlayersLastVehicle(playerPed)
 
-    if trailer ~= 0 then
-        trailerId = trailer
+    if lastVehicle ~= 0 then
+        local success, attachedTrailer = GetVehicleTrailerVehicle(lastVehicle, trailer)
 
-        if trailerId ~= 0 then
-            if Config.Debug == true then
-                print("The trailer attached to the vehicle the player is in has ID: " .. trailerId)
-            end
-            local trailerCoords = GetEntityCoords(trailerId)
-            if Config.Debug == true then
-                print("The trailer with ID " .. trailerId .. " has coordinates: " .. tostring(trailerCoords))
-            end
+        if success then
+            trailerId = attachedTrailer
 
-            if not HasTrailer then
-                QBCore.Functions.Notify('You need to get your tanker!', 'error', 5000)
-            elseif maxStations == Config.MaxFuelDeliveries then
-                QBCore.Functions.Notify('You need to go back and refuel your truck!', 'success', 5000)
-                RemoveBlip(blip)
-                Wait(1000)
-                TriggerEvent('spawnFlashingBlip')
-            else
-                local playerPed = PlayerPedId()
-                LoadAnimDict("anim@am_hold_up@male")
-                TaskPlayAnim(playerPed, "anim@am_hold_up@male", "shoplift_high", 2.0, 8.0, -1, 50, 0, 0, 0, 0)
-                TriggerServerEvent("InteractSound_SV:PlayOnSource", "pickupnozzle", 0.4)
-                Wait(300)
-                StopAnimTask(playerPed, "anim@am_hold_up@male", "shoplift_high", 1.0)
-                fuelnozzle2 = CreateObject('prop_cs_fuel_nozle', 1.0, 1.0, 1.0, true, true, false)
-                local lefthand = GetPedBoneIndex(playerPed, 18905)
-                AttachEntityToEntity(fuelnozzle2, playerPed, lefthand, 0.13, 0.04, 0.01, -42.0, -115.0, -63.42, 0, 1, 0, 1, 0, 1)
-                local grabbednozzlecoords = GetEntityCoords(playerPed)
-                local playerCoords = GetEntityCoords(playerPed)
-                local refuelProps = cache_location
-                RopeLoadTextures()
-                while not RopeAreTexturesLoaded() do
-                    Wait(0)
+            if trailerId ~= 0 then
+                if Config.Debug == true then
+                    print("The last trailer attached to the vehicle the player was in has ID: " .. attachedTrailer)
+                end
+                local trailerCoords = GetEntityCoords(trailerId)
+                if Config.Debug == true then
+                    print("The trailer with ID " .. trailerId .. " has coordinates: " .. tostring(trailerCoords))
+                end
+
+                if not hasTrailer then
+                    QBCore.Functions.Notify('You need to get your tanker!', 'error', 5000)
+                elseif maxStations == Config.MaxFuelDeliveries then
+                    QBCore.Functions.Notify('You need to go back and refuel your truck!', 'success', 5000)
+                    RemoveBlip(blip)
+                    Wait(1000)
+                    TriggerEvent('spawnFlashingBlip')
+                else
+                    local playerPed = PlayerPedId()
+                    LoadAnimDict("anim@am_hold_up@male")
+                    TaskPlayAnim(playerPed, "anim@am_hold_up@male", "shoplift_high", 2.0, 8.0, -1, 50, 0, 0, 0, 0)
+                    TriggerServerEvent("InteractSound_SV:PlayOnSource", "pickupnozzle", 0.4)
+                    Wait(300)
+                    StopAnimTask(playerPed, "anim@am_hold_up@male", "shoplift_high", 1.0)
+                    fuelnozzle2 = CreateObject('prop_cs_fuel_nozle', 1.0, 1.0, 1.0, true, true, false)
+                    local lefthand = GetPedBoneIndex(playerPed, 18905)
+                    AttachEntityToEntity(fuelnozzle2, playerPed, lefthand, 0.13, 0.04, 0.01, -42.0, -115.0, -63.42, 0, 1, 0, 1, 0, 1)
+                    local grabbednozzlecoords = GetEntityCoords(playerPed)
+                    local playerCoords = GetEntityCoords(playerPed)
+                    local refuelProps = cache_location
                     RopeLoadTextures()
-                end
-                while not refuelProps do
-                    Wait(0)
-                end
-                Rope2 = AddRope(trailerCoords.x, trailerCoords.y, trailerCoords.z, 0.0, 0.0, 0.0, 3.0, 3, 10.0, 0.0, 1.0, false, false, false, 1.0, true)
-                while not Rope2 do
-                    Wait(0)
-                end
-                ActivatePhysics(Rope2)
-                Wait(100)
-                local nozzlePos2 = GetEntityCoords(fuelnozzle2)
-                nozzlePos2 = GetOffsetFromEntityInWorldCoords(fuelnozzle2, 0.0, -0.033, -0.195)
-                AttachEntitiesToRope(Rope2, attachedTrailer, fuelnozzle2, trailerCoords.x, trailerCoords.y + 0.185, trailerCoords.z - 1.354, nozzlePos2.x, nozzlePos2.y, nozzlePos2.z, length, false, false, nil, nil)
-                nozzleInHand = true
-                BringToStation()
-                Citizen.CreateThread(function()
-                    while nozzleInHand do
-                        FreezeEntityPosition(trailerId, true)
-                        local currentcoords = GetEntityCoords(playerPed)
-                        local dist = #(grabbednozzlecoords - currentcoords)
-                        if dist > 10.0 then
-                            QBCore.Functions.Notify('Your fuel line has broken!', 'error', 5000)
-                            nozzleInHand = false
-                            FreezeEntityPosition(trailerId, false)
-                            DeleteObject(fuelnozzle2)
-                            RopeUnloadTextures()
-                            DeleteRope(Rope2)
-                        end
-                        Wait(2500)
+                    while not RopeAreTexturesLoaded() do
+                        Wait(0)
+                        RopeLoadTextures()
                     end
-                end)
+                    while not refuelProps do
+                        Wait(0)
+                    end
+                    Rope2 = AddRope(trailerCoords.x, trailerCoords.y, trailerCoords.z, 0.0, 0.0, 0.0, 3.0, 3, 10.0, 0.0, 1.0, false, false, false, 1.0, true)
+                    while not Rope2 do
+                        Wait(0)
+                    end
+                    ActivatePhysics(Rope2)
+                    Wait(100)
+                    local nozzlePos2 = GetEntityCoords(fuelnozzle2)
+                    nozzlePos2 = GetOffsetFromEntityInWorldCoords(fuelnozzle2, 0.0, -0.033, -0.195)
+                    AttachEntitiesToRope(Rope2, attachedTrailer, fuelnozzle2, trailerCoords.x, trailerCoords.y + 0.185, trailerCoords.z - 1.354, nozzlePos2.x, nozzlePos2.y, nozzlePos2.z, length, false, false, nil, nil)
+                    nozzleInHand = true
+                    BringToStation()
+                    Citizen.CreateThread(function()
+                        while nozzleInHand do
+                            FreezeEntityPosition(trailerId, true)
+                            local currentcoords = GetEntityCoords(playerPed)
+                            local dist = #(grabbednozzlecoords - currentcoords)
+                            if dist > 10.0 then
+                                QBCore.Functions.Notify('Your fuel line has broken!', 'error', 5000)
+                                nozzleInHand = false
+                                FreezeEntityPosition(trailerId, false)
+                                DeleteObject(fuelnozzle2)
+                                RopeUnloadTextures()
+                                DeleteRope(Rope2)
+                            end
+                            Wait(2500)
+                        end
+                    end)
+                end
             end
         end
     end
 end)
-
 
 --/////////////////////////////////////////////////////////////////////////////////////////////////--
 
